@@ -1,0 +1,79 @@
+service: panic-service
+
+frameworkVersion: '2'
+variablesResolutionMode: 20210326
+configValidationMode: error
+useDotenv: true
+
+custom:
+  stage: ${opt:stage, 'development'}
+  variables: ${file(./serverless/config/variables.${self:custom.stage}.yml)}
+
+provider:
+  name: aws
+  stackName: panic-service-stack
+  apiName: panic-service 
+  logRetentionInDays: ${self:custom.variables.logRetentionInDays}
+  runtime: nodejs14.x
+  memorySize: ${self:custom.variables.memorySize}
+  timeout: ${self:custom.variables.timeout} 
+  lambdaHashingVersion: 20201221
+  region: ${self:custom.variables.region} 
+  vpc: ${self:custom.variables.vpc}
+  deploymentBucket: ${self:custom.variables.deploymentBucket}
+  httpApi: ${self:custom.variables.httpApi}
+  # iam:
+  #   role: ${cf:panic-system-infrastructure.PanicServiceLambdaRoleArn}
+  environment:
+    PANIC_TABLE_DB: ${cf:panic-system-infrastructure.PanicRequestsTableName}
+    RADAR_API_KEY: ${ssm:/secrets/radar_api_key}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - "*"
+    
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline
+
+functions: 
+  CreatePanicRequest:
+    name: create-panic-request
+    description: Creates a new panic request for control center
+    handler: ./src/handlers/create.handler
+    events:
+      - httpApi:
+          authorizer:
+            name: CognitoJwtAuthorizer
+          path: /api/panic
+          method: POST
+
+  ListPanicRequests:
+    name: list-panic-requests
+    description: Lists all panic requests for control center
+    handler: ./src/handlers/list.handler
+    events:
+      - httpApi:
+          authorizer:
+            name: CognitoJwtAuthorizer
+          path: /api/panic
+          method: GET
+  
+  UpdatePanicRequest:
+    name: update-panic-request
+    description: Update panic request status
+    handler: ./src/handlers/update.handler
+    events:
+      - httpApi:
+          authorizer:
+            name: CognitoJwtAuthorizer
+          path: /api/panic
+          method: PUT   

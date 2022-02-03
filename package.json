@@ -1,0 +1,47 @@
+{
+  "name": "panic-service",
+  "version": "1.0.0",
+  "main": "handler.ts",
+  "repository": "https://github.com/vince191/panic-system-panic-service",
+  "author": "Vincent Kleinhans",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.92",
+    "@types/node": "^16.7.10",
+    "@types/uuid": "^8.3.4",
+    "aws-sdk": "^2.988.0",
+    "eslint-plugin-react": "^7.25.1",
+    "merge-yaml-cli": "^1.1.2",
+    "serverless-offline": "^8.0.0",
+    "serverless-plugin-typescript": "^1.1.9",
+    "typescript": "^4.3.5"
+  },
+  "scripts": {
+    "offline:dev": "sls offline --stage development --httpPort=5000 --noPrependStageInUrl",
+    "deploy:dev": "npm run prepare:variables:dev && npm run sls -- deploy --stage development",
+    "deploy:staging": "npm run prepare:variables:staging && npm run sls -- deploy --stage staging",
+    "deploy:prod": "npm run prepare:variables:prod && npm run sls -- deploy --stage production",
+    "prepare:variables:dev": "npx merge-yaml -i ./serverless/config/default.yml ./serverless/config/development.yml -o ./serverless/config/variables.development.yml ",
+    "prepare:variables:staging": "npx merge-yaml -i ./serverless/config/default.yml ./serverless/config/staging.yml -o ./serverless/config/variables.staging.yml ",
+    "prepare:variables:prod": "npx merge-yaml -i ./serverless/config/default.yml ./serverless/config/production.yml -o ./serverless/config/variables.production.yml ",
+    "remove:dev": "npm run prepare:variables:dev && npm run sls -- remove --stage development",
+    "remove:staging": "npm run prepare:variables:staging && npm run sls -- remove --stage staging",
+    "remove:prod": "npm run prepare:variables:prod && npm run sls -- remove --stage production",
+    "sls": "npx serverless",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "transform": {
+      "node_modules/variables/.+\\.(j|t)sx?$": "ts-jest"
+    },
+    "transformIgnorePatterns": [
+      "node_modules/(?!variables/.*)"
+    ]
+  },
+  "dependencies": {
+    "axios": "^0.25.0",
+    "uuid": "^8.3.2"
+  }
+}
